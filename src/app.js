@@ -9,7 +9,8 @@ app.use(cookieParser())
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://interview-ai-frontend1.vercel.app"
+    "https://cosmic-kulfi-d73e39.netlify.app",
+    "https://interview-ai-frontend1.onrender.com"
   ],
   credentials: true
 }));
