@@ -3,7 +3,7 @@ const { z } = require("zod");
 const puppeteer = require("puppeteer");
 
 const ai = new GoogleGenAI({
-    apiKey: process.env.GOOGLE_GENAI_API_KEY
+    apiKey: process.env.GEMINI_API_KEY
 });
 
 
@@ -162,7 +162,8 @@ async function generatePdfFromHtml(htmlContent) {
         args: [
             "--no-sandbox",
             "--disable-setuid-sandbox",
-            "--disable-dev-shm-usage"
+            "--disable-dev-shm-usage",
+            "--disable-gpu"
         ]
     });
 
