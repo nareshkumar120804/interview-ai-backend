@@ -69,22 +69,20 @@ ${jobDescription}
 `;
 
     const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: prompt
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+            responseMimeType: "application/json"
+        }
     });
 
-    let text = response.candidates[0].content.parts[0].text;
-
-    // clean markdown if any
-    text = text.replace(/```json/g, "").replace(/```/g, "").trim();
-
+    let text = response.text;
     let parsed;
 
     try {
         parsed = JSON.parse(text);
     } catch (err) {
         console.log(" RAW AI OUTPUT:", text);
-
         parsed = null;
     }
 
@@ -160,7 +158,12 @@ ${jobDescription}
 
 async function generatePdfFromHtml(htmlContent) {
     const browser = await puppeteer.launch({
-        headless: "new"
+        headless: "new",
+        args: [
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--disable-dev-shm-usage"
+        ]
     });
 
     const page = await browser.newPage();
@@ -212,14 +215,14 @@ ${jobDescription}
 `;
 
     const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: prompt
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+            responseMimeType: "application/json"
+        }
     });
 
-    let text = response.candidates[0].content.parts[0].text;
-
-    text = text.replace(/```json/g, "").replace(/```/g, "").trim();
-
+    let text = response.text;
     let jsonContent;
 
     try {

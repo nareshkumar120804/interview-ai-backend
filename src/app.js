@@ -6,12 +6,16 @@ const app = express()
 
 app.use(express.json())
 app.use(cookieParser())
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://cosmic-kulfi-d73e39.netlify.app",
+  "https://interview-ai-frontend1.onrender.com"
+];
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://cosmic-kulfi-d73e39.netlify.app",
-    "https://interview-ai-frontend1.onrender.com"
-  ],
+  origin: allowedOrigins,
   credentials: true
 }));
 
