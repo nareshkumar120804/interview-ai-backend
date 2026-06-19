@@ -19,7 +19,12 @@ async function generateInterViewReportController(req, res) {
             });
         }
 
-        const resumeContent = await pdfParse(req.file.buffer);
+        let resumeContent;
+        try {
+            resumeContent = await pdfParse(req.file.buffer);
+        } catch (err) {
+            return res.status(400).json({ message: "Failed to parse PDF. Please upload a valid PDF file." });
+        }
 
         const { selfDescription, jobDescription } = req.body;
 
@@ -58,9 +63,9 @@ async function generateInterViewReportController(req, res) {
     } catch (error) {
         console.error("generateInterViewReportController Error:", error);
 
-        return res.status(500).json({
+        return res.status(400).json({
             success: false,
-            message: error.message || "Internal Server Error"
+            message: error.message || "Something went wrong while generating the report. Please check your Gemini API Key in Render environment variables."
         });
     }
 }

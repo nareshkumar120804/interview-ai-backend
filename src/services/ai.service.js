@@ -68,21 +68,26 @@ Job Description:
 ${jobDescription}
 `;
 
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: {
-            responseMimeType: "application/json"
-        }
-    });
+    let text = "";
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-1.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json"
+            }
+        });
+        text = response.text;
+    } catch (err) {
+        console.error("Gemini API Error:", err.message);
+        throw new Error("Failed to generate AI response. Please check your Gemini API key or try again.");
+    }
 
-    let text = response.text;
     let parsed;
-
     try {
         parsed = JSON.parse(text);
     } catch (err) {
-        console.log(" RAW AI OUTPUT:", text);
+        console.error("RAW AI OUTPUT Parse Error:", text);
         parsed = null;
     }
 
@@ -126,29 +131,39 @@ ${jobDescription}
     };
 
     
-    // SAFE RETURN
-    
-    if (!parsed) return fallback;
+    const sanitizeQuestions = (arr, fb) => {
+        if (!Array.isArray(arr) || arr.length === 0) return fb;
+        return arr.map(q => ({
+            question: q?.question || "No question provided",
+            intention: q?.intention || "General assessment",
+            answer: q?.answer || "No specific answer expected"
+        }));
+    };
+
+    const sanitizeSkillGaps = (arr, fb) => {
+        if (!Array.isArray(arr) || arr.length === 0) return fb;
+        return arr.map(g => ({
+            skill: g?.skill || "General Technical Skills",
+            severity: ["low", "medium", "high"].includes(g?.severity?.toLowerCase()) ? g.severity.toLowerCase() : "medium"
+        }));
+    };
+
+    const sanitizePlan = (arr, fb) => {
+        if (!Array.isArray(arr) || arr.length === 0) return fb;
+        return arr.map((p, i) => ({
+            day: Number(p?.day) || (i + 1),
+            focus: p?.focus || "General Review",
+            tasks: Array.isArray(p?.tasks) && p.tasks.length ? p.tasks : ["Review fundamentals"]
+        }));
+    };
 
     return {
-        title: parsed.title || fallback.title,
-        matchScore: parsed.matchScore ?? fallback.matchScore,
-
-        technicalQuestions: parsed.technicalQuestions?.length
-            ? parsed.technicalQuestions
-            : fallback.technicalQuestions,
-
-        behavioralQuestions: parsed.behavioralQuestions?.length
-            ? parsed.behavioralQuestions
-            : fallback.behavioralQuestions,
-
-        skillGaps: parsed.skillGaps?.length
-            ? parsed.skillGaps
-            : fallback.skillGaps,
-
-        preparationPlan: parsed.preparationPlan?.length
-            ? parsed.preparationPlan
-            : fallback.preparationPlan
+        title: parsed?.title || fallback.title,
+        matchScore: typeof parsed?.matchScore === 'number' ? parsed.matchScore : fallback.matchScore,
+        technicalQuestions: sanitizeQuestions(parsed?.technicalQuestions, fallback.technicalQuestions),
+        behavioralQuestions: sanitizeQuestions(parsed?.behavioralQuestions, fallback.behavioralQuestions),
+        skillGaps: sanitizeSkillGaps(parsed?.skillGaps, fallback.skillGaps),
+        preparationPlan: sanitizePlan(parsed?.preparationPlan, fallback.preparationPlan)
     };
 }
 
@@ -216,7 +231,7 @@ ${jobDescription}
 `;
 
     const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-1.5-flash",
         contents: prompt,
         config: {
             responseMimeType: "application/json"
