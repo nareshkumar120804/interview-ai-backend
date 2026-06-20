@@ -44,7 +44,7 @@ async function registerUserController(req, res) {
 
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: "none",
+      sameSite: "lax",
       secure: true // true in production,
       maxAge: 24 * 60 * 60 * 1000
     });
@@ -106,7 +106,7 @@ async function loginUserController(req, res) {
 
     res.cookie("token", token, {
         httpOnly: true,
-        sameSite: "none",
+        sameSite: "lax",
         secure: true // true in production,
       maxAge: 24 * 60 * 60 * 1000
     });
@@ -136,7 +136,7 @@ async function logoutUserController(req, res) {
 
     res.clearCookie("token", {
         httpOnly: true,
-        sameSite: "none",
+        sameSite: "lax",
         secure: true // true in production
     });
 
