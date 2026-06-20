@@ -9,57 +9,66 @@ const tokenBlacklistModel = require("../models/blacklist.model")
  * @access Public
  */
 async function registerUserController(req, res) {
-
-    const { username, email, password } = req.body
+  try {
+    const { username, email, password } = req.body;
 
     if (!username || !email || !password) {
-        return res.status(400).json({
-            message: "Please provide username, email and password"
-        })
+      return res.status(400).json({
+        message: "Please provide username, email and password"
+      });
     }
 
-    const isUserAlreadyExists = await userModel.findOne({
-        $or: [ { username }, { email } ]
-    })
+    const existingUser = await userModel.findOne({
+      $or: [{ email }, { username }]
+    });
 
-    if (isUserAlreadyExists) {
-        return res.status(400).json({
-            message: "Account already exists with this email address or username"
-        })
+    if (existingUser) {
+      return res.status(400).json({
+        message: "Email or username already exists"
+      });
     }
 
-    const hash = await bcrypt.hash(password, 10)
+    const hash = await bcrypt.hash(password, 10);
 
     const user = await userModel.create({
-        username,
-        email,
-        password: hash
-    })
+      username,
+      email,
+      password: hash
+    });
 
     const token = jwt.sign(
-        { id: user._id, username: user.username },
-        process.env.JWT_SECRET,
-        { expiresIn: "1d" }
-    )
+      { id: user._id, username: user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
 
-   const isProduction = process.env.NODE_ENV === "production" || process.env.FRONTEND_URL?.includes("https");
-   res.cookie("token", token, {
-     httpOnly: true,
-     secure: isProduction,
-     sameSite: isProduction ? "none" : "lax"
-   });
+    res.cookie("token", token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false // true in production
+    });
 
+    return res.status(201).json({
+      message: "User registered successfully",
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email
+      }
+    });
 
-    res.status(201).json({
-        message: "User registered successfully",
-        token,
-        user: {
-            id: user._id,
-            username: user.username,
-            email: user.email
-        }
-    })
+  } catch (err) {
+    // 🔥 IMPORTANT: Mongo duplicate protection
+    if (err.code === 11000) {
+      return res.status(400).json({
+        message: "Email or username already exists"
+      });
+    }
 
+    return res.status(500).json({
+      message: "Server error"
+    });
+  }
 }
 
 
@@ -92,23 +101,22 @@ async function loginUserController(req, res) {
         { id: user._id, username: user.username },
         process.env.JWT_SECRET,
         { expiresIn: "1d" }
-    )
+    );
 
-   const isProduction = process.env.NODE_ENV === "production" || process.env.FRONTEND_URL?.includes("https");
-   res.cookie("token", token, {
-     httpOnly: true,
-     secure: isProduction,
-     sameSite: isProduction ? "none" : "lax"
-   });
-    res.status(200).json({
+    res.cookie("token", token, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: false // true in production
+    });
+
+    return res.status(200).json({
         message: "User loggedIn successfully.",
-        token,
         user: {
             id: user._id,
             username: user.username,
             email: user.email
         }
-    })
+    });
 }
 
 
@@ -118,24 +126,22 @@ async function loginUserController(req, res) {
  * @access public
  */
 async function logoutUserController(req, res) {
-    let token = req.cookies.token;
-    if (!token && req.headers.authorization) {
-        const parts = req.headers.authorization.split(" ");
-        token = parts.length === 2 && parts[0] === "Bearer" ? parts[1] : req.headers.authorization;
-    }
+    const token = req.cookies.token;
 
     if (token) {
-        await tokenBlacklistModel.create({ token })
+        await tokenBlacklistModel.create({ token });
     }
 
-    res.clearCookie("token")
+    res.clearCookie("token", {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: false // true in production
+    });
 
-    res.status(200).json({
+    return res.status(200).json({
         message: "User logged out successfully"
-    })
-}
-
-/**
+    });
+}/**
  * @name getMeController
  * @description get the current logged in user details.
  * @access private

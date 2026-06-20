@@ -5,21 +5,12 @@ const tokenBlacklistModel = require("../models/blacklist.model")
 
 async function authUser(req, res, next) {
 
-    let token = req.cookies.token;
-
-    if (!token && req.headers.authorization) {
-        const parts = req.headers.authorization.split(" ");
-        if (parts.length === 2 && parts[0] === "Bearer") {
-            token = parts[1];
-        } else {
-            token = req.headers.authorization;
-        }
-    }
+    const token = req.cookies.token
 
     if (!token) {
         return res.status(401).json({
             message: "Token not provided."
-        });
+        })
     }
 
     const isTokenBlacklisted = await tokenBlacklistModel.findOne({
