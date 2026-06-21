@@ -42,12 +42,14 @@ async function registerUserController(req, res) {
       { expiresIn: "1d" }
     );
 
-    const isProduction = process.env.NODE_ENV === "production";
+    const origin = req.headers.origin || "";
+    const isLocalhost = origin.includes("localhost") || origin.includes("127.0.0.1");
+    const isSecureCookie = origin && !isLocalhost;
 
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: isProduction ? "none" : "lax",
-      secure: isProduction,
+      sameSite: isSecureCookie ? "none" : "lax",
+      secure: isSecureCookie,
     });
 
     return res.status(201).json({
@@ -105,12 +107,14 @@ async function loginUserController(req, res) {
         { expiresIn: "1d" }
     );
 
-    const isProduction = process.env.NODE_ENV === "production";
+    const origin = req.headers.origin || "";
+    const isLocalhost = origin.includes("localhost") || origin.includes("127.0.0.1");
+    const isSecureCookie = origin && !isLocalhost;
 
     res.cookie("token", token, {
         httpOnly: true,
-        sameSite: isProduction ? "none" : "lax",
-        secure: isProduction,
+        sameSite: isSecureCookie ? "none" : "lax",
+        secure: isSecureCookie,
     });
 
     return res.status(200).json({
@@ -136,12 +140,14 @@ async function logoutUserController(req, res) {
         await tokenBlacklistModel.create({ token });
     }
 
-    const isProduction = process.env.NODE_ENV === "production";
+    const origin = req.headers.origin || "";
+    const isLocalhost = origin.includes("localhost") || origin.includes("127.0.0.1");
+    const isSecureCookie = origin && !isLocalhost;
 
     res.clearCookie("token", {
         httpOnly: true,
-        sameSite: isProduction ? "none" : "lax",
-        secure: isProduction
+        sameSite: isSecureCookie ? "none" : "lax",
+        secure: isSecureCookie
     });
 
     return res.status(200).json({
