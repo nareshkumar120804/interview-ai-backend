@@ -42,11 +42,12 @@ async function registerUserController(req, res) {
       { expiresIn: "1d" }
     );
 
+    const isProduction = process.env.NODE_ENV === "production";
+
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: "none",
-      secure: true ,// true in production
-      maxAge: 24 * 60 * 60 * 1000
+      sameSite: isProduction ? "none" : "lax",
+      secure: isProduction,
     });
 
     return res.status(201).json({
@@ -104,11 +105,12 @@ async function loginUserController(req, res) {
         { expiresIn: "1d" }
     );
 
+    const isProduction = process.env.NODE_ENV === "production";
+
     res.cookie("token", token, {
         httpOnly: true,
-        sameSite: "none",
-        secure: true ,// true in production
-      maxAge: 24 * 60 * 60 * 1000
+        sameSite: isProduction ? "none" : "lax",
+        secure: isProduction,
     });
 
     return res.status(200).json({
@@ -134,10 +136,12 @@ async function logoutUserController(req, res) {
         await tokenBlacklistModel.create({ token });
     }
 
+    const isProduction = process.env.NODE_ENV === "production";
+
     res.clearCookie("token", {
         httpOnly: true,
-        sameSite: "none",
-        secure: true // true in production
+        sameSite: isProduction ? "none" : "lax",
+        secure: isProduction
     });
 
     return res.status(200).json({

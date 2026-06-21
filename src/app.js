@@ -6,10 +6,32 @@ const app = express()
 
 app.use(express.json())
 app.use(cookieParser())
-app.use(cors({
-    origin:[ "https://interview-ai-frontend-swart.vercel.app","https://interview-ai-frontend-git-main-nareshkumar120804-2053s-projects.vercel.app",
+const allowedOrigins = [
+    "http://localhost:5173",
+    "https://interview-ai-frontend-swart.vercel.app",
+    "https://interview-ai-frontend-git-main-nareshkumar120804-2053s-projects.vercel.app",
     "https://interview-ai-frontend-1ewej0nsh.vercel.app"
-            ],
+];
+
+if (process.env.FRONTEND_URL) {
+    const envOrigins = process.env.FRONTEND_URL.split(",").map(o => o.trim());
+    envOrigins.forEach(origin => {
+        if (!allowedOrigins.includes(origin)) {
+            allowedOrigins.push(origin);
+        }
+    });
+}
+
+app.use(cors({
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps, curl, postman)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error(`Origin ${origin} not allowed by CORS`));
+        }
+    },
     credentials: true
 }))
 
