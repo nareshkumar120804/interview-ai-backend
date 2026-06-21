@@ -10,18 +10,29 @@ const interviewReportModel = require("../models/interviewReport.model")
  */
 async function generateInterViewReportController(req, res) {
 
-    const resumeContent = await (new pdfParse.PDFParse(Uint8Array.from(req.file.buffer))).getText()
+    let resumeText = ""
+    if (req.file) {
+        try {
+            const resumeContent = await pdfParse(req.file.buffer)
+            resumeText = resumeContent.text || ""
+        } catch (parseError) {
+            console.error("Failed to parse PDF resume:", parseError)
+            return res.status(400).json({
+                message: "Failed to parse PDF resume. Please ensure it is a valid PDF file."
+            })
+        }
+    }
     const { selfDescription, jobDescription } = req.body
 
     const interViewReportByAi = await generateInterviewReport({
-        resume: resumeContent.text,
+        resume: resumeText,
         selfDescription,
         jobDescription
     })
 
     const interviewReport = await interviewReportModel.create({
         user: req.user.id,
-        resume: resumeContent.text,
+        resume: resumeText,
         selfDescription,
         jobDescription,
         ...interViewReportByAi
